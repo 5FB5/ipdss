@@ -10,10 +10,10 @@
 #define PIN_ENA 9
 #define PIN_IN1 8
 #define PIN_IN2 7
-#define PIN_ENGINE_INTERRUPT 0 
+/*#define PIN_ENGINE_INTERRUPT 0 
 #define REDUCTION_COEFF (float)36.13
 #define UPDATE_FREQ 10.f
-
+*/
 #include "I2Cdev.h"
 #include "MPU6050_6Axis_MotionApps20.h"
 
@@ -25,12 +25,12 @@ MPU6050 mpu;
 
 // Motor vars
 uint8_t motorPower = 0;
-
+/*
 volatile int tickCount = 0;
 volatile unsigned long int timeStamp = 0;
 
 float rvPerS = 0;
-
+*/
 // MPU control/status vars
 bool dmpReady = false;  // set true if DMP init was successful
 
@@ -57,11 +57,11 @@ volatile bool mpuInterrupt = false;     // indicates whether MPU interrupt pin h
 void dmpDataReady() {
     mpuInterrupt = true;
 }
-
+/*
 void activateInterrupt() {
   tickCount++;
-}
-
+}*/
+/*
 // Print engine speed via Hall's sensor
 void printEngineSpeed() {
   if (millis() - timeStamp >= 100) {
@@ -72,16 +72,16 @@ void printEngineSpeed() {
     timeStamp = millis();
   }
 }
-
+*/
 void setup() {
     // Motors setup
     // Activate pins for the first engine
     pinMode(PIN_ENA, OUTPUT);
     pinMode(PIN_IN1, OUTPUT);
     pinMode(PIN_IN2, OUTPUT);
-    pinMode(PIN_ENGINE_INTERRUPT, INPUT);
+    //pinMode(PIN_ENGINE_INTERRUPT, INPUT);
 
-    attachInterrupt(PIN_ENGINE_INTERRUPT, activateInterrupt, RISING);
+    //attachInterrupt(PIN_ENGINE_INTERRUPT, activateInterrupt, RISING);
 
     // Turn off motors
     digitalWrite(PIN_IN1, LOW);
