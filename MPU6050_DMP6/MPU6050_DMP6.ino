@@ -1,3 +1,19 @@
+#define OUTPUT_READABLE_YAWPITCHROLL
+//#define OUTPUT_READABLE_QUATERNION
+//#define OUTPUT_READABLE_EULER
+//#define OUTPUT_READABLE_REALACCEL
+//#define OUTPUT_READABLE_WORLDACCEL
+
+#define INTERRUPT_PIN 2  // use pin 2 on Arduino Uno & most boards
+
+// Motor defines
+#define PIN_ENA 9
+#define PIN_IN1 8
+#define PIN_IN2 7
+#define PIN_ENGINE_INTERRUPT 0 
+#define REDUCTION_COEFF (float)36.13
+#define UPDATE_FREQ 10.f
+
 #include "I2Cdev.h"
 #include "MPU6050_6Axis_MotionApps20.h"
 
@@ -7,46 +23,13 @@
 
 MPU6050 mpu;
 
-// uncomment "OUTPUT_READABLE_QUATERNION" if you want to see the actual
-// quaternion components in a [w, x, y, z] format (not best for parsing
-// on a remote host such as Processing or something though)
-//#define OUTPUT_READABLE_QUATERNION
-
-// uncomment "OUTPUT_READABLE_EULER" if you want to see Euler angles
-// (in degrees) calculated from the quaternions coming from the FIFO.
-// Note that Euler angles suffer from gimbal lock (for more info, see
-// http://en.wikipedia.org/wiki/Gimbal_lock)
-//#define OUTPUT_READABLE_EULER
-
-// uncomment "OUTPUT_READABLE_YAWPITCHROLL" if you want to see the yaw/
-// pitch/roll angles (in degrees) calculated from the quaternions coming
-// from the FIFO. Note this also requires gravity vector calculations.
-// Also note that yaw/pitch/roll angles suffer from gimbal lock (for
-// more info, see: http://en.wikipedia.org/wiki/Gimbal_lock)
-#define OUTPUT_READABLE_YAWPITCHROLL
-
-// uncomment "OUTPUT_READABLE_REALACCEL" if you want to see acceleration
-// components with gravity removed. This acceleration reference frame is
-// not compensated for orientation, so +X is always +X according to the
-// sensor, just without the effects of gravity. If you want acceleration
-// compensated for orientation, us OUTPUT_READABLE_WORLDACCEL instead.
-//#define OUTPUT_READABLE_REALACCEL
-
-// uncomment "OUTPUT_READABLE_WORLDACCEL" if you want to see acceleration
-// components with gravity removed and adjusted for the world frame of
-// reference (yaw is relative to initial orientation, since no magnetometer
-// is present in this case). Could be quite handy in some cases.
-//#define OUTPUT_READABLE_WORLDACCEL
-
-#define INTERRUPT_PIN 2  // use pin 2 on Arduino Uno & most boards
-
-// motor defines
-#define PIN_ENA 9
-#define PIN_IN1 8
-#define PIN_IN2 7
-
-// motor vars
+// Motor vars
 uint8_t motorPower = 0;
+
+volatile int tickCount = 0;
+volatile unsigned long int timeStamp = 0;
+
+float rvPerS = 0;
 
 // MPU control/status vars
 bool dmpReady = false;  // set true if DMP init was successful
@@ -70,20 +53,40 @@ float euler[3];         // [psi, theta, phi]    Euler angle container
 float ypr[3];           // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector
 
 volatile bool mpuInterrupt = false;     // indicates whether MPU interrupt pin has gone high
+
 void dmpDataReady() {
     mpuInterrupt = true;
 }
 
+void activateInterrupt() {
+  tickCount++;
+}
+
+// Print engine speed via Hall's sensor
+void printEngineSpeed() {
+  if (millis() - timeStamp >= 100) {
+    rvPerS = tickCount / REDUCTION_COEF * UPDATE_FREQ;
+    Serial.print(rvPerS);
+
+    tickCount = 0;
+    timeStamp = millis();
+  }
+}
+
 void setup() {
-    // motors setup
+    // Motors setup
+    // Activate pins for the first engine
     pinMode(PIN_ENA, OUTPUT);
     pinMode(PIN_IN1, OUTPUT);
     pinMode(PIN_IN2, OUTPUT);
+    pinMode(PIN_ENGINE_INTERRUPT, INPUT);
 
-    // turn off motors
+    attachInterrupt(PIN_ENGINE_INTERRUPT, activateInterrupt, RISING);
+
+    // Turn off motors
     digitalWrite(PIN_IN1, LOW);
     digitalWrite(PIN_IN2, LOW);
-  
+    
     // join I2C bus (I2Cdev library doesn't do this automatically)
     #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
         Wire.begin();
@@ -212,12 +215,12 @@ void loop() {
             
             analogWrite(PIN_ENA, motorPower);
 
-            // don't forget to choose axis
+            // Don't forget to choose axis
             if (mpuPitch > 0) {
               digitalWrite(PIN_IN1, HIGH);
               digitalWrite(PIN_IN2, LOW);
             }
-            // don't forget to choose axis
+            // Don't forget to choose axis
              else if (mpuPitch < 0) {
               digitalWrite(PIN_IN1, LOW);
               digitalWrite(PIN_IN2, HIGH);
