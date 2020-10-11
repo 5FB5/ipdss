@@ -1,19 +1,25 @@
 #include "pid.h"
 
-float CPid::computePwmToRps() {
+float CPid::computeHerzToSeconds(float herz) {
+    float secs = herz * 60;
+    dt_s = secs;
+}
 
+int CPid::pidSetCoefs(int kp, int ki, int kd) {
+    this->Kp = kp;
+    this->Ki = ki;
+    this->Kd = kd;
 }
 
 float CPid::computePid(float input, float pidSetPoint) {
     float error = pidSetPoint - input;
-    float d_input = pidPrevInput - input;
+    float d_error = pidPrevError - error;
 
-    pidPrevInput = input;
     pidIntegral += error * dt_s;
 
     pidOutput += Kp * error;
     pidOutput += Ki * pidIntegral;
-    pidOutput += Kd * d_input * dt_s;
+    pidOutput += Kd * d_error * dt_s;
 
     pidOutput = abs(pidOutput);
   
@@ -24,6 +30,7 @@ float CPid::computePid(float input, float pidSetPoint) {
         pidOutput = pidMax;
     }
 
+    pidPrevError = error;
     //rps = computePwmToRps();
 
     return pidOutput;

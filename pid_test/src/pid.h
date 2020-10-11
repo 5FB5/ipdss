@@ -6,6 +6,11 @@ class CPid {
 
 public:
 
+    float computePid(float input, float pidSetPoint);
+    float computeHerzToSeconds(float herz);
+    
+    int pidSetCoefs(int kp, int ki, int kd);
+
 private:
 
     int pidSetPoint = 0;
@@ -23,11 +28,6 @@ private:
     float dt_s = 0.2;
     float pidIntegral = 0.0;
 
-    float rps = 0.0;
-
     int pidPrevInput = 0;
-
-    float computePid(float input, float pidSetPoint);
-    float computePwmToRps();
-
+    float pidPrevError = 0.0;
 };

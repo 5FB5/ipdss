@@ -15,9 +15,10 @@ public:
     typedef void (CMotor::*hallInterrupt_callback_ptr_t)();
     hallInterrupt_callback_ptr_t callback;
     
+    float calculateRps();
+
     void hallInterrupt_callback();
-    void calculateRps();
-    void setPwm(uint8_t direction, uint8_t pwm);
+    void startMotor(uint8_t direction, uint8_t pwm);
     void setup();
 
 private:
