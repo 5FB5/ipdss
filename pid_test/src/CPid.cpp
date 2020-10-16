@@ -1,18 +1,18 @@
 #include "CPid.h"
 
 void CPid::computeHerzToSeconds(float herz) {
-    this->dt_s =  herz * 60;
+    dt_s =  herz * 60;
 }
 
 void CPid::pidSetCoefs(int kp, int ki, int kd) {
-    this->Kp = kp;
-    this->Ki = ki;
-    this->Kd = kd;
+    Kp = kp;
+    Ki = ki;
+    Kd = kd;
 }
 
 void CPid::pidSetMinMax(int pid_min, int pid_max) {
-    this->pidMin = pid_min;
-    this->pidMax = pid_max;
+    pidMin = pid_min;
+    pidMax = pid_max;
 }
 
 float CPid::computePid(float input, float pidSetPoint) {

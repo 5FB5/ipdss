@@ -1,9 +1,6 @@
 #pragma once
 
 #define PWM_TO_RPS (float)0.012
-#define REDUCTION_COEFF (float)36.13
-#define HERZ 10
-#define UPDATE_FREQ 5.f
 
 #include <Arduino.h>
 
@@ -19,7 +16,7 @@ public:
 
     uint8_t motorPower = 0;
 
-    void setup(int pidKp, int pidKi, int pidKd, int pid_range_min, int pid_range_max);
+    void setup(float motor_reduc_coef, float update_freq, float speed_calc_herz, int pidKp, int pidKi, int pidKd, int pid_range_min, int pid_range_max);
     void motorProcess(uint8_t direction, uint8_t rps);
     void hallInterrupt_callback();
 
