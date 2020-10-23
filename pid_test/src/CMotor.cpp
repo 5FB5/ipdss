@@ -20,19 +20,12 @@ void CMotor::setup(float motor_reduc_coef, float update_freq, float speed_calc_h
     digitalWrite(m_pin_dir2, LOW);
 }
 
-// TODO: How much RPS in 1 PWM unit
-float calculatePwmToRpsCoef() {
-    
-}
-
 void CMotor::motorProcess(uint8_t direction, uint8_t rps) {    
-    if (millis() - timeStamp >= 200) {
+    if (millis() - timeStamp >= 10) {
         rvPerS = tickCount / m_motor_reduc_coef * m_motor_update_freq;
         tickCount = 0;
 
-        unsigned char pwm = (unsigned char)pidMotor->computePid(rvPerS, rps) / PWM_TO_RPS; // FIXME: it should be a func
-    
-        //pwm = abs(pwm);
+        float pwm = abs(pidMotor->computePid(rvPerS, rps));
 
         // if (pwm < pidMotor->pidMin) {
         //     pwm = pidMotor->pidMin;

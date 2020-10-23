@@ -1,6 +1,6 @@
 #pragma once
 
-#define PWM_TO_RPS (float)0.012
+#define PWM_TO_RPS (float)112.f //0.012 // It's not a universal coef, must be calculated for any motor individualy
 
 #include <Arduino.h>
 #include "CPid.h"
@@ -11,12 +11,9 @@ public:
     CMotor(int hall_interrupt_numb, int pin_pwm, int pin_dir1, int pin_dir2);
     CPid* pidMotor = new CPid;
 
-    float calculatePwmToRpsCoef();
-
-    float m_motor_reduc_coef;
-    float m_motor_update_freq;
-
-    float rvPerS = 0;
+    float m_motor_reduc_coef = 0.0;
+    float m_motor_update_freq = 0.0;
+    float rvPerS = 0.0;
     
     unsigned int tickCount = 0;
 
