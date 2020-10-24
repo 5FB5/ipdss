@@ -3,6 +3,7 @@
 //#define OUTPUT_READABLE_EULER
 //#define OUTPUT_READABLE_REALACCEL
 //#define OUTPUT_READABLE_WORLDACCEL
+
 #define SERIAL_BUD_SPEED 115200
 #define INTERRUPT_PIN 3  // use pin 3 on Arduino Uno & most boards
 
@@ -144,7 +145,6 @@ void CMpu::processMpu() {
             Serial.println(mpuRoll);
         
         #endif
-
 
         #ifdef OUTPUT_READABLE_WORLDACCEL
             // display initial world-frame acceleration, adjusted to remove gravity
