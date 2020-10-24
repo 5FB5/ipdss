@@ -4,7 +4,7 @@
 //#define OUTPUT_READABLE_REALACCEL
 //#define OUTPUT_READABLE_WORLDACCEL
 #define SERIAL_BUD_SPEED 115200
-#define INTERRUPT_PIN 2  // use pin 2 on Arduino Uno & most boards
+#define INTERRUPT_PIN 3  // use pin 3 on Arduino Uno & most boards
 
 #include "CMpu.h"
 
@@ -12,7 +12,7 @@ void CMpu::dmpDataReady() {
     mpuInterrupt = true;
 }
 
-void CMpu::setMpu() {
+void CMpu::init() {
         // join I2C bus (I2Cdev library doesn't do this automatically)
     #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
         Wire.begin();
@@ -53,7 +53,7 @@ void CMpu::setMpu() {
         Serial.print(F("Enabling interrupt detection (Arduino external interrupt "));
         Serial.print(digitalPinToInterrupt(INTERRUPT_PIN));
         Serial.println(F(")..."));
-        attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN), dmpDataReady, RISING); // TODO: place dmpDataReady in sketch
+        //attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN), dmpDataReady, RISING); // TODO: place dmpDataReady in sketch
         mpuIntStatus = mpu->getIntStatus();
 
         // set our DMP Ready flag so the main loop() function knows it's okay to use it
@@ -135,15 +135,6 @@ void CMpu::processMpu() {
             mpuYaw = ypr[0] * 180 / M_PI;
             mpuPitch = ypr[1] * 180 / M_PI;
             mpuRoll = ypr[2] * 180 / M_PI;
-
-            // Don't forget to choose axis
-            if (mpuPitch > 0) {
-              //anything...
-            }
-            // Don't forget to choose axis
-             else if (mpuPitch < 0) {
-              //anything...
-             }
             
             Serial.print("ypr\t");
             Serial.print(mpuYaw);

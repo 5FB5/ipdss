@@ -13,13 +13,15 @@ class CMpu {
 public: 
     MPU6050* mpu = new MPU6050;
 
+    void init();
     void processMpu();
     void dmpDataReady();
-    void setMpu();
 
     float mpuYaw = 0;
     float mpuPitch = 0;
     float mpuRoll = 0;
+
+    volatile bool mpuInterrupt = false;
 
 private:
     // MPU control/status vars
@@ -42,6 +44,4 @@ private:
 
     float euler[3];         // [psi, theta, phi]    Euler angle container
     float ypr[3];           // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector
-
-    volatile bool mpuInterrupt = false;     // indicates whether MPU interrupt pin has gone high
 };;
