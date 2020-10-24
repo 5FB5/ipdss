@@ -1,7 +1,7 @@
 #include "CPid.h"
 
-void CPid::computeHerzToSeconds(float herz) {
-    dt_s =  herz * 60;
+void CPid::computeMsToSeconds(float millis) {
+    dt_s = millis / 1000;
 }
 
 void CPid::pidSetCoefs(int kp, int ki, int kd) {

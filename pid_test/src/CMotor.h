@@ -1,6 +1,6 @@
 #pragma once
 
-#define PWM_TO_RPS (float)112.f //0.012 // It's not a universal coef, must be calculated for any motor individualy
+#define PWM_TO_RPS (float)1.36 // max rps on 255 PWM / 255
 
 #include <Arduino.h>
 #include "CPid.h"
@@ -8,23 +8,23 @@
 class CMotor {
 
 public:
-    CMotor(int hall_interrupt_numb, int pin_pwm, int pin_dir1, int pin_dir2);
+    CMotor(uint8_t interrupt_numb, uint8_t pin_pwm, uint8_t pin_dir1, uint8_t pin_dir2);
     CPid* pidMotor = new CPid;
 
-    float m_motor_reduc_coef = 0.0;
-    float m_motor_update_freq = 0.0;
-    float rvPerS = 0.0;
+    float m_motor_reduc_coef = 0;
+    float m_update_period = 0;
+    float rvPerS = 0;
     
-    unsigned int tickCount = 0;
+    volatile int tickCount = 0;
 
-    void setup(float motor_reduc_coef, float update_freq, float speed_calc_herz, int pidKp, int pidKi, int pidKd, int pid_range_min, int pid_range_max);
-    void motorProcess(uint8_t direction, uint8_t rps);  
+    void setup(float motor_reduc_coef, float speed_calc_herz, float pidKp, float pidKi, float pidKd, float pid_range_min, float pid_range_max);
+    void motorProcess(uint8_t direction, float rps);  
 
 private:
     volatile unsigned long int timeStamp = 0;
 
-    int m_hall_interrupt_numb;
-    int m_pin_pwm;
-    int m_pin_dir1;
-    int m_pin_dir2;
+    uint8_t m_interrupt_numb;
+    uint8_t m_pin_pwm;
+    uint8_t m_pin_dir1;
+    uint8_t m_pin_dir2;
 };

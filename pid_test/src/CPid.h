@@ -6,7 +6,7 @@ class CPid {
 
 public:
 
-    void computeHerzToSeconds(float herz);
+    void computeMsToSeconds(float millis);
     
     void pidSetCoefs(int kp, int ki, int kd);
     void pidSetMinMax(int pid_min, int pid_max);
@@ -30,6 +30,6 @@ private:
     float dt_s = 0.0;
     float pidIntegral = 0.0;
 
-    int pidPrevInput = 0;
+    float pidPrevInput = 0;
     float pidPrevError = 0.0;
 };
