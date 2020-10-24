@@ -4,16 +4,15 @@
 //#define OUTPUT_READABLE_REALACCEL
 //#define OUTPUT_READABLE_WORLDACCEL
 
+#define SERIAL_BUD_SPEED 115200
+
 #define INTERRUPT_PIN 2  // use pin 2 on Arduino Uno & most boards
 
 // Motor defines
 #define PIN_ENA 9
 #define PIN_IN1 8
 #define PIN_IN2 7
-/*#define PIN_ENGINE_INTERRUPT 0 
-#define REDUCTION_COEFF (float)36.13
-#define UPDATE_FREQ 10.f
-*/
+
 #include "I2Cdev.h"
 #include "MPU6050_6Axis_MotionApps20.h"
 
@@ -23,14 +22,6 @@
 
 MPU6050 mpu;
 
-// Motor vars
-uint8_t motorPower = 0;
-/*
-volatile int tickCount = 0;
-volatile unsigned long int timeStamp = 0;
-
-float rvPerS = 0;
-*/
 // MPU control/status vars
 bool dmpReady = false;  // set true if DMP init was successful
 
@@ -57,36 +48,8 @@ volatile bool mpuInterrupt = false;     // indicates whether MPU interrupt pin h
 void dmpDataReady() {
     mpuInterrupt = true;
 }
-/*
-void activateInterrupt() {
-  tickCount++;
-}*/
-/*
-// Print engine speed via Hall's sensor
-void printEngineSpeed() {
-  if (millis() - timeStamp >= 100) {
-    rvPerS = tickCount / REDUCTION_COEF * UPDATE_FREQ;
-    Serial.print(rvPerS);
 
-    tickCount = 0;
-    timeStamp = millis();
-  }
-}
-*/
-void setup() {
-    // Motors setup
-    // Activate pins for the first engine
-    pinMode(PIN_ENA, OUTPUT);
-    pinMode(PIN_IN1, OUTPUT);
-    pinMode(PIN_IN2, OUTPUT);
-    //pinMode(PIN_ENGINE_INTERRUPT, INPUT);
-
-    //attachInterrupt(PIN_ENGINE_INTERRUPT, activateInterrupt, RISING);
-
-    // Turn off motors
-    digitalWrite(PIN_IN1, LOW);
-    digitalWrite(PIN_IN2, LOW);
-    
+void setI2cMpu() {
     // join I2C bus (I2Cdev library doesn't do this automatically)
     #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
         Wire.begin();
@@ -96,7 +59,7 @@ void setup() {
     #endif
 
     // initialize serial communication
-    Serial.begin(115200);
+    Serial.begin(SERIAL_BUD_SPEED);
 
     // initialize device
     Serial.println(F("Initializing I2C devices..."));
@@ -145,6 +108,10 @@ void setup() {
         Serial.print(devStatus);
         Serial.println(F(")"));
     }
+}
+
+void setup() {
+    setI2cMpu();
 }
 
 void loop() {
@@ -210,20 +177,13 @@ void loop() {
             float mpuPitch = ypr[1] * 180 / M_PI;
             float mpuRoll = ypr[2] * 180 / M_PI;
 
-            // Choose axis
-            uint8_t motorPower = abs(mpuPitch);
-            
-            analogWrite(PIN_ENA, motorPower);
-
             // Don't forget to choose axis
             if (mpuPitch > 0) {
-              digitalWrite(PIN_IN1, HIGH);
-              digitalWrite(PIN_IN2, LOW);
+              //anything...
             }
             // Don't forget to choose axis
              else if (mpuPitch < 0) {
-              digitalWrite(PIN_IN1, LOW);
-              digitalWrite(PIN_IN2, HIGH);
+              //anything...
              }
             
             Serial.print("ypr\t");
