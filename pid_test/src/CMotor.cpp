@@ -44,8 +44,8 @@ void CMotor::motorProcess(uint8_t direction, float rps) {
         
         analogWrite(m_pin_pwm, pwm);
         
-        Serial.print("Motor 1 PID PWM: ");
-        Serial.println(pwm);
+        // Serial.print("Motor 1 PID PWM: ");
+        // Serial.println(pwm);
         
         timeStamp = millis();
     }
