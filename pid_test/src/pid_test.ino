@@ -17,7 +17,7 @@
  #define T 10.f // millis
 
 // Motor's PID regulator
- #define PID_KP 9
+ #define PID_KP 7
  #define PID_KI 0
  #define PID_KD 0
  #define PID_MIN 0
