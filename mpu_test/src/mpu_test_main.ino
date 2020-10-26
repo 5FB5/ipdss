@@ -42,8 +42,8 @@ void dmpDataReady() {
     mpuInterrupt = true;
 }
 
-void setup() {    
-    // join I2C bus (I2Cdev library doesn't do this automatically)
+void initMpu() {
+        // join I2C bus (I2Cdev library doesn't do this automatically)
     #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
         Wire.begin();
         //Wire.setClock(400000); // 400kHz I2C clock. Comment this line if having compilation difficulties
@@ -68,10 +68,10 @@ void setup() {
     devStatus = mpu.dmpInitialize();
 
     // supply your own gyro offsets here, scaled for min sensitivity
-    mpu.setXGyroOffset(220);
-    mpu.setYGyroOffset(76);
-    mpu.setZGyroOffset(-85);
-    mpu.setZAccelOffset(1788); // 1688 factory default for my test chip
+    // mpu.setXGyroOffset(220);
+    // mpu.setYGyroOffset(76);
+    // mpu.setZGyroOffset(-85);
+    // mpu.setZAccelOffset(1788); // 1688 factory default for my test chip
 
     // make sure it worked (returns 0 if so)
     if (devStatus == 0) {
@@ -103,8 +103,8 @@ void setup() {
     }
 }
 
-void loop() {
-    // if programming failed, don't try to do anything
+void processMpu() {
+        // if programming failed, don't try to do anything
     if (!dmpReady) return;
 
     // wait for MPU interrupt or extra packet(s) available
@@ -193,4 +193,12 @@ void loop() {
         #endif
 
     }
+}
+
+void setup() {    
+    initMpu();
+}
+
+void loop() {
+    processMpu();
 }
