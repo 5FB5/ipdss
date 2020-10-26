@@ -23,14 +23,6 @@
 
 MPU6050 mpu;
 
-// Motor vars
-uint8_t motorPower = 0;
-
-volatile int tickCount = 0;
-volatile unsigned long int timeStamp = 0;
-
-float rvPerS = 0;
-
 // MPU control/status vars
 bool dmpReady = false;  // set true if DMP init was successful
 
@@ -58,35 +50,7 @@ void dmpDataReady() {
     mpuInterrupt = true;
 }
 
-void activateInterrupt() {
-  tickCount++;
-}
-
-// Print engine speed via Hall's sensor
-void printEngineSpeed() {
-  if (millis() - timeStamp >= 100) {
-    rvPerS = tickCount / REDUCTION_COEF * UPDATE_FREQ;
-    Serial.print(rvPerS);
-
-    tickCount = 0;
-    timeStamp = millis();
-  }
-}
-
-void setup() {
-    // Motors setup
-    // Activate pins for the first engine
-    pinMode(PIN_ENA, OUTPUT);
-    pinMode(PIN_IN1, OUTPUT);
-    pinMode(PIN_IN2, OUTPUT);
-    pinMode(PIN_ENGINE_INTERRUPT, INPUT);
-
-    attachInterrupt(PIN_ENGINE_INTERRUPT, activateInterrupt, RISING);
-
-    // Turn off motors
-    digitalWrite(PIN_IN1, LOW);
-    digitalWrite(PIN_IN2, LOW);
-    
+void setup() {    
     // join I2C bus (I2Cdev library doesn't do this automatically)
     #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
         Wire.begin();
@@ -210,22 +174,6 @@ void loop() {
             float mpuPitch = ypr[1] * 180 / M_PI;
             float mpuRoll = ypr[2] * 180 / M_PI;
 
-            // Choose axis
-            uint8_t motorPower = abs(mpuPitch);
-            
-            analogWrite(PIN_ENA, motorPower);
-
-            // Don't forget to choose axis
-            if (mpuPitch > 0) {
-              digitalWrite(PIN_IN1, HIGH);
-              digitalWrite(PIN_IN2, LOW);
-            }
-            // Don't forget to choose axis
-             else if (mpuPitch < 0) {
-              digitalWrite(PIN_IN1, LOW);
-              digitalWrite(PIN_IN2, HIGH);
-             }
-            
             Serial.print("ypr\t");
             Serial.print(mpuYaw);
             Serial.print("\t");
