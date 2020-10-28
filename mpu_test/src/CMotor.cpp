@@ -24,7 +24,7 @@ void CMotor::setup(float motor_reduc_coef, float speed_calc_millis, float pidKp,
     digitalWrite(m_pin_dir2, LOW);
 }
 
-void CMotor::motorProcess(uint8_t direction, float rps) {    
+void CMotor::process(uint8_t direction, float rps) {    
     if (millis() - timeStamp >= m_update_period) {
         rvPerS = tickCount / (m_motor_reduc_coef * m_update_period);
         tickCount = 0;

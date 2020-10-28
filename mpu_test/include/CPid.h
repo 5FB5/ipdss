@@ -1,3 +1,6 @@
+#ifndef PID_H
+#define PID_H
+
 #pragma once
 
 #include <Arduino.h>
@@ -33,3 +36,5 @@ private:
     float pidPrevInput = 0;
     float pidPrevError = 0.0;
 };
+
+#endif

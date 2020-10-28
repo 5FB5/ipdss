@@ -4,16 +4,48 @@
 //#define OUTPUT_READABLE_REALACCEL
 //#define OUTPUT_READABLE_WORLDACCEL
 
-#define INTERRUPT_PIN 3  // use pin 2 on Arduino Uno & most boards
+#define SERIAL_BUD_SPEED 115200 
+
+// MPU
+#define MPU_INTERRUPT_PIN 3
+#define MPU_PID_KP 0 
+#define MPU_PID_KI 0 
+#define MPU_PID_KD 0
+#define MPU_PID_MIN 0 // for setting motor rps 
+#define MPU_PID_MAX 3
+
+// Motor basic defines
+#define MOTOR_INTERRUPT 0
+#define MOTOR_REDUCTION_COEF (float)18.8f
+#define MOTOR_PROCESS_PERIOD 10.f // milliseconds
+#define MOTOR_PID_KP 7
+#define MOTOR_PID_KI 0
+#define MOTOR_PID_KD 0
+#define MOTOR_PID_MIN 0 
+#define MOTOR_PID_MAX 255
+
+// Motor 1
+#define PIN_MOTOR_ENA 9
+#define PIN_MOTOR_IN1 8
+#define PIN_MOTOR_IN2 7
+
+// Motor 2
+// ...
 
 #include "I2Cdev.h"
 #include "MPU6050_6Axis_MotionApps20.h"
+#include "CMotor.h"
+#include "CPid.h"
 
 #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
     #include "Wire.h"
 #endif
 
+// why the heck can't this be packed in class???
 MPU6050 mpu;
+CPid pidMpu;
+
+CMotor motor1(MOTOR_INTERRUPT, PIN_MOTOR_ENA, PIN_MOTOR_IN1, PIN_MOTOR_IN2);
 
 // MPU control/status vars
 bool dmpReady = false;  // set true if DMP init was successful
@@ -36,6 +68,10 @@ VectorFloat gravity;    // [x, y, z]            gravity vector
 float euler[3];         // [psi, theta, phi]    Euler angle container
 float ypr[3];           // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector
 
+float mpuYaw;
+float mpuPitch;
+float mpuRoll;
+
 volatile bool mpuInterrupt = false;     // indicates whether MPU interrupt pin has gone high
 
 void dmpDataReady() {
@@ -52,12 +88,12 @@ void initMpu() {
     #endif
 
     // initialize serial communication
-    Serial.begin(115200);
+    Serial.begin(SERIAL_BUD_SPEED);
 
     // initialize device
     Serial.println(F("Initializing I2C devices..."));
     mpu.initialize();
-    pinMode(INTERRUPT_PIN, INPUT);
+    pinMode(MPU_INTERRUPT_PIN, INPUT);
 
     // verify connection
     Serial.println(F("Testing device connections..."));
@@ -81,9 +117,9 @@ void initMpu() {
 
         // enable Arduino interrupt detection
         Serial.print(F("Enabling interrupt detection (Arduino external interrupt "));
-        Serial.print(digitalPinToInterrupt(INTERRUPT_PIN));
+        Serial.print(digitalPinToInterrupt(MPU_INTERRUPT_PIN));
         Serial.println(F(")..."));
-        attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN), dmpDataReady, RISING);
+        attachInterrupt(digitalPinToInterrupt(MPU_INTERRUPT_PIN), dmpDataReady, RISING);
         mpuIntStatus = mpu.getIntStatus();
 
         // set our DMP Ready flag so the main loop() function knows it's okay to use it
@@ -162,9 +198,9 @@ void processMpu() {
             mpu.dmpGetGravity(&gravity, &q);
             mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
 
-            float mpuYaw = ypr[0] * 180 / M_PI;
-            float mpuPitch = ypr[1] * 180 / M_PI;
-            float mpuRoll = ypr[2] * 180 / M_PI;
+            mpuYaw = ypr[0] * 180 / M_PI;
+            mpuPitch = ypr[1] * 180 / M_PI;
+            mpuRoll = ypr[2] * 180 / M_PI;
 
             Serial.print("ypr\t");
             Serial.print(mpuYaw);
@@ -195,10 +231,25 @@ void processMpu() {
     }
 }
 
+void increaseMotor1EncoderTicks() {
+    motor1.tickCount++;
+}
+
 void setup() {    
     initMpu();
+    //motor1.setup(MOTOR_REDUCTION_COEF, MOTOR_PROCESS_PERIOD, MOTOR_PID_KP, MOTOR_PID_KI, MOTOR_PID_KD, MOTOR_PID_MIN, MOTOR_PID_MAX);
 }
 
 void loop() {
     processMpu();
+    
+    // int mpuMotorSpeed = pidMpu.computePid(mpuPitch, 0);
+
+    // // test
+    // if (mpuMotorSpeed > 0) {
+    //     motor1.process(0, mpuMotorSpeed);
+    // }
+    //  else {
+    //      motor1.process(1, mpuMotorSpeed);
+    //  }
 }
