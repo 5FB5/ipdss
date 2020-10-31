@@ -1,14 +1,14 @@
+#define SERIAL_BUD_SPEED 115200 // check platformio.ini's monitor_speed and upload_speed and change or set this value from/in file
+
+// MPU
 #define OUTPUT_READABLE_YAWPITCHROLL
 //#define OUTPUT_READABLE_QUATERNION
 //#define OUTPUT_READABLE_EULER
 //#define OUTPUT_READABLE_REALACCEL
 //#define OUTPUT_READABLE_WORLDACCEL
-
-#define SERIAL_BUD_SPEED 115200 
-
-// MPU
+ 
 #define MPU_INTERRUPT_PIN 3
-#define MPU_PID_KP 0 
+#define MPU_PID_KP 7 
 #define MPU_PID_KI 0 
 #define MPU_PID_KD 0
 #define MPU_PID_MIN 0 // for setting motor rps 
@@ -29,8 +29,10 @@
 #define PIN_MOTOR_IN1 8
 #define PIN_MOTOR_IN2 7
 
-// Motor 2
-// ...
+// // Motor 2
+// #define PIN_MOTOR2_ENB 9
+// #define PIN_MOTOR2_IN3 8
+// #define PIN_MOTOR2_IN4 7
 
 #include "I2Cdev.h"
 #include "MPU6050_6Axis_MotionApps20.h"
@@ -46,6 +48,7 @@ MPU6050 mpu;
 CPid pidMpu;
 
 CMotor motor1(MOTOR_INTERRUPT, PIN_MOTOR_ENA, PIN_MOTOR_IN1, PIN_MOTOR_IN2);
+// CMotor motor2(MOTOR_INTERRUPT, PIN_MOTOR2_ENB, PIN_MOTOR2_IN3, PIN_MOTOR2_IN4);
 
 // MPU control/status vars
 bool dmpReady = false;  // set true if DMP init was successful
@@ -237,19 +240,22 @@ void increaseMotor1EncoderTicks() {
 
 void setup() {    
     initMpu();
-    //motor1.setup(MOTOR_REDUCTION_COEF, MOTOR_PROCESS_PERIOD, MOTOR_PID_KP, MOTOR_PID_KI, MOTOR_PID_KD, MOTOR_PID_MIN, MOTOR_PID_MAX);
+    motor1.setup(MOTOR_REDUCTION_COEF, MOTOR_PROCESS_PERIOD, MOTOR_PID_KP, MOTOR_PID_KI, MOTOR_PID_KD, MOTOR_PID_MIN, MOTOR_PID_MAX);
+    //motor2.setup(MOTOR_REDUCTION_COEF, MOTOR_PROCESS_PERIOD, MOTOR_PID_KP, MOTOR_PID_KI, MOTOR_PID_KD, MOTOR_PID_MIN, MOTOR_PID_MAX);
 }
 
 void loop() {
-    processMpu();
+    processMpu(); // activate mpu
     
-    // int mpuMotorSpeed = pidMpu.computePid(mpuPitch, 0);
+    int mpuMotorSpeed = (int)pidMpu.computePid(mpuPitch, 0);
+    Serial.print(motor1.rvPerS);
 
-    // // test
-    // if (mpuMotorSpeed > 0) {
-    //     motor1.process(0, mpuMotorSpeed);
-    // }
-    //  else {
-    //      motor1.process(1, mpuMotorSpeed);
-    //  }
+    if (mpuMotorSpeed > 0) { // go to the right/left (check this)
+        motor1.process(0, mpuMotorSpeed);
+        //motor2.process(0, mpuMotorSpeed);
+    }
+     else { // go to the left/right (check this)
+        motor1.process(1, mpuMotorSpeed);
+         //motor2.process(1, mpuMotorSpeed);
+     }
 }
