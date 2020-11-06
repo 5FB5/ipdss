@@ -8,10 +8,10 @@
 //#define OUTPUT_READABLE_WORLDACCEL
  
 #define MPU_INTERRUPT_PIN 3
-#define MPU_PID_KP 7 
+#define MPU_PID_KP 1.2
 #define MPU_PID_KI 0 
 #define MPU_PID_KD 0
-#define MPU_PID_MIN 0 // for setting motor rps 
+#define MPU_PID_MIN -3 // for setting motor rps 
 #define MPU_PID_MAX 3
 
 // Motor basic defines
@@ -35,9 +35,10 @@
 // #define PIN_MOTOR2_IN4 7
 
 #include "I2Cdev.h"
-#include "MPU6050_6Axis_MotionApps20.h"
 #include "CMotor.h"
 #include "CPid.h"
+#include "MPU6050_6Axis_MotionApps20.h"
+
 
 #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
     #include "Wire.h"
@@ -71,6 +72,7 @@ VectorFloat gravity;    // [x, y, z]            gravity vector
 float euler[3];         // [psi, theta, phi]    Euler angle container
 float ypr[3];           // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector
 
+float mpuMotorSpeed;
 float mpuYaw;
 float mpuPitch;
 float mpuRoll;
@@ -205,12 +207,12 @@ void processMpu() {
             mpuPitch = ypr[1] * 180 / M_PI;
             mpuRoll = ypr[2] * 180 / M_PI;
 
-            Serial.print("ypr\t");
-            Serial.print(mpuYaw);
-            Serial.print("\t");
-            Serial.print(mpuPitch);
-            Serial.print("\t");
-            Serial.println(mpuRoll);
+            // Serial.print("ypr\t");
+            // Serial.print(mpuYaw);
+            // Serial.print("\t");
+            // Serial.print(mpuPitch);
+            // Serial.print("\t");
+            // Serial.println(mpuRoll);
         
         #endif
 
@@ -240,22 +242,32 @@ void increaseMotor1EncoderTicks() {
 
 void setup() {    
     initMpu();
+    pidMpu.pidSetCoefs(MPU_PID_KP, MPU_PID_KI, MPU_PID_KD);
+    pidMpu.pidSetMinMax(MPU_PID_MIN, MPU_PID_MAX);
+    pidMpu.computeMsToSeconds(10);
+
     motor1.setup(MOTOR_REDUCTION_COEF, MOTOR_PROCESS_PERIOD, MOTOR_PID_KP, MOTOR_PID_KI, MOTOR_PID_KD, MOTOR_PID_MIN, MOTOR_PID_MAX);
     //motor2.setup(MOTOR_REDUCTION_COEF, MOTOR_PROCESS_PERIOD, MOTOR_PID_KP, MOTOR_PID_KI, MOTOR_PID_KD, MOTOR_PID_MIN, MOTOR_PID_MAX);
 }
 
 void loop() {
     processMpu(); // activate mpu
-    
-    int mpuMotorSpeed = (int)pidMpu.computePid(mpuPitch, 0);
-    Serial.print(motor1.rvPerS);
 
-    if (mpuMotorSpeed > 0) { // go to the right/left (check this)
-        motor1.process(0, mpuMotorSpeed);
-        //motor2.process(0, mpuMotorSpeed);
+    if (devStatus == 0) {
+        mpuMotorSpeed = (float)pidMpu.computePid(mpuPitch, 0);
+        Serial.println(mpuMotorSpeed);
+
+        if (mpuMotorSpeed > 0) { // go to the right/left (check this)
+            motor1.process(0, mpuMotorSpeed);
+            //motor2.process(0, mpuMotorSpeed);
+        }
+        else { // go to the left/right (check this)
+            motor1.process(1, abs(mpuMotorSpeed));
+            //motor2.process(1, mpuMotorSpeed);
+        }
+
+        if (mpuMotorSpeed == 0) {
+            motor1.process(0, 0);
+        }
     }
-     else { // go to the left/right (check this)
-        motor1.process(1, mpuMotorSpeed);
-         //motor2.process(1, mpuMotorSpeed);
-     }
 }
