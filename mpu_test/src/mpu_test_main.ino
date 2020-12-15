@@ -1,6 +1,7 @@
+// ARDUINO 
 #define SERIAL_BUD_SPEED 115200 // check platformio.ini's monitor_speed and upload_speed and change or set this value from/in file
 
-// MPU
+// MPU SETTINGS: TODO: check pins with Arduino
 #define OUTPUT_READABLE_YAWPITCHROLL
 //#define OUTPUT_READABLE_QUATERNION
 //#define OUTPUT_READABLE_EULER
@@ -14,7 +15,7 @@
 #define MPU_PID_MIN -3 // for setting motor rps 
 #define MPU_PID_MAX 3
 
-// Motor basic defines
+// MOTOR'S DEFINES
 #define MOTOR_INTERRUPT 0
 #define MOTOR_REDUCTION_COEF (float)18.8f
 #define MOTOR_PROCESS_PERIOD 10.f // milliseconds
@@ -24,21 +25,21 @@
 #define MOTOR_PID_MIN 0 
 #define MOTOR_PID_MAX 255
 
+// TODO: check pins with Arduino
 // Motor 1
 #define PIN_MOTOR_ENA 9
 #define PIN_MOTOR_IN1 8
 #define PIN_MOTOR_IN2 7
 
-// // Motor 2
-// #define PIN_MOTOR2_ENB 9
-// #define PIN_MOTOR2_IN3 8
-// #define PIN_MOTOR2_IN4 7
+// Motor 2
+#define PIN_MOTOR2_ENB 9
+#define PIN_MOTOR2_IN3 8
+#define PIN_MOTOR2_IN4 7
 
 #include "I2Cdev.h"
 #include "CMotor.h"
 #include "CPid.h"
 #include "MPU6050_6Axis_MotionApps20.h"
-
 
 #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
     #include "Wire.h"
@@ -49,7 +50,7 @@ MPU6050 mpu;
 CPid pidMpu;
 
 CMotor motor1(MOTOR_INTERRUPT, PIN_MOTOR_ENA, PIN_MOTOR_IN1, PIN_MOTOR_IN2);
-// CMotor motor2(MOTOR_INTERRUPT, PIN_MOTOR2_ENB, PIN_MOTOR2_IN3, PIN_MOTOR2_IN4);
+CMotor motor2(MOTOR_INTERRUPT, PIN_MOTOR2_ENB, PIN_MOTOR2_IN3, PIN_MOTOR2_IN4);
 
 // MPU control/status vars
 bool dmpReady = false;  // set true if DMP init was successful
@@ -84,6 +85,10 @@ void dmpDataReady() {
 }
 
 void initMpu() {
+    pidMpu.pidSetCoefs(MPU_PID_KP, MPU_PID_KI, MPU_PID_KD);
+    pidMpu.pidSetMinMax(MPU_PID_MIN, MPU_PID_MAX);
+    pidMpu.computeMsToSeconds(10);
+
         // join I2C bus (I2Cdev library doesn't do this automatically)
     #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
         Wire.begin();
@@ -242,32 +247,28 @@ void increaseMotor1EncoderTicks() {
 
 void setup() {    
     initMpu();
-    pidMpu.pidSetCoefs(MPU_PID_KP, MPU_PID_KI, MPU_PID_KD);
-    pidMpu.pidSetMinMax(MPU_PID_MIN, MPU_PID_MAX);
-    pidMpu.computeMsToSeconds(10);
-
     motor1.setup(MOTOR_REDUCTION_COEF, MOTOR_PROCESS_PERIOD, MOTOR_PID_KP, MOTOR_PID_KI, MOTOR_PID_KD, MOTOR_PID_MIN, MOTOR_PID_MAX);
-    //motor2.setup(MOTOR_REDUCTION_COEF, MOTOR_PROCESS_PERIOD, MOTOR_PID_KP, MOTOR_PID_KI, MOTOR_PID_KD, MOTOR_PID_MIN, MOTOR_PID_MAX);
+    motor2.setup(MOTOR_REDUCTION_COEF, MOTOR_PROCESS_PERIOD, MOTOR_PID_KP, MOTOR_PID_KI, MOTOR_PID_KD, MOTOR_PID_MIN, MOTOR_PID_MAX);
 }
 
 void loop() {
-    processMpu(); // activate mpu
+    processMpu();
 
     if (devStatus == 0) {
-        mpuMotorSpeed = (float)pidMpu.computePid(mpuPitch, 0);
+        mpuMotorSpeed = abs((float)pidMpu.computePid(mpuPitch, 0));
         Serial.println(mpuMotorSpeed);
-
-        if (mpuMotorSpeed > 0) { // go to the right/left (check this)
-            motor1.process(0, mpuMotorSpeed);
-            //motor2.process(0, mpuMotorSpeed);
-        }
-        else { // go to the left/right (check this)
-            motor1.process(1, abs(mpuMotorSpeed));
-            //motor2.process(1, mpuMotorSpeed);
-        }
 
         if (mpuMotorSpeed == 0) {
             motor1.process(0, 0);
+            motor2.process(0, 0);
+        }
+        else if (mpuMotorSpeed > 0) { // go to the right/left (check this)
+            motor1.process(0, mpuMotorSpeed);
+            motor2.process(0, mpuMotorSpeed);
+        }
+        else if (mpuMotorSpeed < 0) { // go to the left/right (check this)
+            motor1.process(1, mpuMotorSpeed);
+            motor2.process(1, mpuMotorSpeed);
         }
     }
 }

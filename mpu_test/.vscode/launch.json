@@ -13,6 +13,7 @@
             "request": "launch",
             "name": "PIO Debug",
             "executable": "c:/projects/ipdss/mpu_test/.pio/build/megaatmega2560/firmware.elf",
+            "projectEnvName": "megaatmega2560",
             "toolchainBinDir": "C:/Users/veckt/.platformio/packages/toolchain-atmelavr/bin",
             "preLaunchTask": {
                 "type": "PlatformIO",
@@ -25,6 +26,7 @@
             "request": "launch",
             "name": "PIO Debug (skip Pre-Debug)",
             "executable": "c:/projects/ipdss/mpu_test/.pio/build/megaatmega2560/firmware.elf",
+            "projectEnvName": "megaatmega2560",
             "toolchainBinDir": "C:/Users/veckt/.platformio/packages/toolchain-atmelavr/bin",
             "internalConsoleOptions": "openOnSessionStart"
         }
