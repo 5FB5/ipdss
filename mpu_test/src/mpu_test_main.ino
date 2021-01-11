@@ -1,56 +1,96 @@
-// ARDUINO 
-#define SERIAL_BUD_SPEED 115200 // check platformio.ini's monitor_speed and upload_speed and change or set this value from/in file
+//====================
+//  ARDUINO
+//====================
+#define SERIAL_BUD_SPEED 115200 // check platformio.ini's monitor_speed and upload_speed 
+                                // and change or set this value from/in file
 
-// MPU SETTINGS: TODO: check pins with Arduino
+//====================
+//  MPU SETTINGS
+//====================
+
+// Uncomment define if you want to set your own offset for MPU's sensivity
+// #define MPU_SET_OFFSET
+
+#ifdef MPU_SET_OFFSET
+    #define MPU_OFFSET_GYRO_X 220
+    #define MPU_OFFSET_GYRO_Y 76
+    #define MPU_OFFSET_GYRO_Z -85
+    #define MPU_OFFSET_ACCEL_Z 1788
+#endif
+
 #define OUTPUT_READABLE_YAWPITCHROLL
 //#define OUTPUT_READABLE_QUATERNION
 //#define OUTPUT_READABLE_EULER
 //#define OUTPUT_READABLE_REALACCEL
 //#define OUTPUT_READABLE_WORLDACCEL
  
-#define MPU_INTERRUPT_PIN 3
-#define MPU_PID_KP 1.2
+// What interrupt pin will receive data from MPU
+#define MPU_INTERRUPT_PIN 18
+
+// MPU's PID regulator settings
+#define MPU_PID_KP 7
 #define MPU_PID_KI 0 
 #define MPU_PID_KD 0
-#define MPU_PID_MIN -3 // for setting motor rps 
-#define MPU_PID_MAX 3
 
-// MOTOR'S DEFINES
-#define MOTOR_INTERRUPT 0
+// Range of degrees that MPU's PID will output, 
+// for setting motor's speed based on MPU's inclination angle
+#define MPU_PID_MIN -100
+#define MPU_PID_MAX 100
+
+//====================
+//  MOTOR SETTINGS
+//====================
+
+// INTERRUPT PLATE PINS (Arduino Mega / Mega 2560)
+//  INT0 - 2 PIN
+//  INT1 - 3 PIN
+//  INT3 - 20 PIN
+//  INT4 - 19 PIN
+//  INT5 - 18 PIN
+
+// Interrupts that will accept encoder's data from motors
+#define MOTOR1_INTERRUPT 0
+#define MOTOR2_INTERRUPT 1
+
+// Check your motor's specifications of reduction coefficient
 #define MOTOR_REDUCTION_COEF (float)18.8f
+
+// Time period of motor processing
 #define MOTOR_PROCESS_PERIOD 10.f // milliseconds
-#define MOTOR_PID_KP 7
+
+// Motor's PID regulator coefficients
+#define MOTOR_PID_KP 8
 #define MOTOR_PID_KI 0
 #define MOTOR_PID_KD 0
 #define MOTOR_PID_MIN 0 
 #define MOTOR_PID_MAX 255
 
-// TODO: check pins with Arduino
 // Motor 1
+// Arduino's ENA/ENB pins will transmit calculated PWM value to motor driver's ENA/ENB pins
 #define PIN_MOTOR_ENA 9
 #define PIN_MOTOR_IN1 8
 #define PIN_MOTOR_IN2 7
 
-// Motor 2
-#define PIN_MOTOR2_ENB 9
-#define PIN_MOTOR2_IN3 8
-#define PIN_MOTOR2_IN4 7
+// Motor 2 
+#define PIN_MOTOR2_ENB 12
+#define PIN_MOTOR2_IN3 11
+#define PIN_MOTOR2_IN4 10
 
-#include "I2Cdev.h"
-#include "CMotor.h"
-#include "CPid.h"
-#include "MPU6050_6Axis_MotionApps20.h"
+#include "../include/I2Cdev.h"
+#include "../include/CMotor.h"
+#include "../include/CPid.h"
+#include "../include/MPU6050_6Axis_MotionApps20.h"
 
 #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
-    #include "Wire.h"
+    #include "../include/Wire.h"
 #endif
 
 // why the heck can't this be packed in class???
 MPU6050 mpu;
 CPid pidMpu;
 
-CMotor motor1(MOTOR_INTERRUPT, PIN_MOTOR_ENA, PIN_MOTOR_IN1, PIN_MOTOR_IN2);
-CMotor motor2(MOTOR_INTERRUPT, PIN_MOTOR2_ENB, PIN_MOTOR2_IN3, PIN_MOTOR2_IN4);
+CMotor motor1(MOTOR1_INTERRUPT, PIN_MOTOR_ENA, PIN_MOTOR_IN1, PIN_MOTOR_IN2);
+CMotor motor2(MOTOR2_INTERRUPT, PIN_MOTOR2_ENB, PIN_MOTOR2_IN3, PIN_MOTOR2_IN4);
 
 // MPU control/status vars
 bool dmpReady = false;  // set true if DMP init was successful
@@ -73,7 +113,7 @@ VectorFloat gravity;    // [x, y, z]            gravity vector
 float euler[3];         // [psi, theta, phi]    Euler angle container
 float ypr[3];           // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector
 
-float mpuMotorSpeed;
+float mpuDeg;
 float mpuYaw;
 float mpuPitch;
 float mpuRoll;
@@ -114,10 +154,12 @@ void initMpu() {
     devStatus = mpu.dmpInitialize();
 
     // supply your own gyro offsets here, scaled for min sensitivity
-    // mpu.setXGyroOffset(220);
-    // mpu.setYGyroOffset(76);
-    // mpu.setZGyroOffset(-85);
-    // mpu.setZAccelOffset(1788); // 1688 factory default for my test chip
+    #ifdef MPU_SET_OFFSET
+        mpu.setXGyroOffset(MPU_OFFSET_GYRO_X);
+        mpu.setYGyroOffset(MPU_OFFSET_GYRO_Y);
+        mpu.setZGyroOffset(MPU_OFFSET_GYRO_Z);
+        mpu.setZAccelOffset(MPU_OFFSET_ACCEL_Z); // 1688 factory default for my test chip
+    #endif
 
     // make sure it worked (returns 0 if so)
     if (devStatus == 0) {
@@ -245,30 +287,34 @@ void increaseMotor1EncoderTicks() {
     motor1.tickCount++;
 }
 
+void increaseMotor2EncoderTicks() {
+    motor2.tickCount++;
+}
+
 void setup() {    
     initMpu();
+
     motor1.setup(MOTOR_REDUCTION_COEF, MOTOR_PROCESS_PERIOD, MOTOR_PID_KP, MOTOR_PID_KI, MOTOR_PID_KD, MOTOR_PID_MIN, MOTOR_PID_MAX);
     motor2.setup(MOTOR_REDUCTION_COEF, MOTOR_PROCESS_PERIOD, MOTOR_PID_KP, MOTOR_PID_KI, MOTOR_PID_KD, MOTOR_PID_MIN, MOTOR_PID_MAX);
+
+    Serial.begin(SERIAL_BUD_SPEED);
+
+    attachInterrupt(MOTOR1_INTERRUPT, increaseMotor1EncoderTicks, RISING);
+    attachInterrupt(MOTOR2_INTERRUPT, increaseMotor2EncoderTicks, RISING);
 }
 
 void loop() {
-    processMpu();
-
+    // If MPU works
     if (devStatus == 0) {
-        mpuMotorSpeed = abs((float)pidMpu.computePid(mpuPitch, 0));
-        Serial.println(mpuMotorSpeed);
+        processMpu();
 
-        if (mpuMotorSpeed == 0) {
-            motor1.process(0, 0);
-            motor2.process(0, 0);
-        }
-        else if (mpuMotorSpeed > 0) { // go to the right/left (check this)
-            motor1.process(0, mpuMotorSpeed);
-            motor2.process(0, mpuMotorSpeed);
-        }
-        else if (mpuMotorSpeed < 0) { // go to the left/right (check this)
-            motor1.process(1, mpuMotorSpeed);
-            motor2.process(1, mpuMotorSpeed);
-        }
+        mpuDeg = (float)pidMpu.computePid(mpuPitch, 0);
+        Serial.println(mpuDeg);
+        
+
+        // if (mpuDeg > 0) { // go to the left/right (check this)
+        //     motor1.process(1, mpuDeg);
+        //     motor2.process(1, mpuDeg);
+        // }
     }
 }

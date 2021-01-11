@@ -31,31 +31,39 @@ SOFTWARE.
 class CPid {
 
 public:
-
+    // Computes time value for dt_s (in seconds) coefficient
+    // Accepts value in milliseconds that you need
     void computeMsToSeconds(float millis);
     
+    // Set PID coefficients that user wrote
     void pidSetCoefs(int kp, int ki, int kd);
+
+    // Set range of PID's output
     void pidSetMinMax(int pid_min, int pid_max);
 
+    // Main computing function
+    // Accepts current input and value that we need to get
     float computePid(float input, float pidSetPoint);
     
     int pidMin = 0;
     int pidMax = 0;
 
 private:
-
+    // Set value that we need to achieve
     int pidSetPoint = 0;
 
+    // Vars for computePid function's result and enter values
     int pidInput = 0;
     int pidOutput = 0;
 
-    // regulator coefs
+    // PID's coefficients
     float Kp = 0;
     float Ki = 0;
     float Kd = 0;
     float dt_s = 0.0;
     float pidIntegral = 0.0;
 
+    // For compute function too
     float pidPrevInput = 0;
     float pidPrevError = 0.0;
 };

@@ -21,32 +21,51 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+/*
+    KEEP IN MIND!
+    This CMotor library developed for motors with encoder
+    For example, my IPDSS robot uses GB37-3530 motor model with disc encoder
+*/
+
 #ifndef MOTOR_H
 #define MOTOR_H
 
 #pragma once
 
+// Value for interpreting the PWM in revolutions per second
+// Can be different on different motor, check this
 #define PWM_TO_RPS (float)1.36 // (max rps on 255 PWM / 255)
 
-#include <Arduino.h>
-#include "CPid.h"
+#include "../include/CPid.h"
 
 class CMotor {
 
 public:
-    
+    // Constructor, accepts number of interrupt for encoder, PWM pin, 
+    // digital pins that sets direction for current motor
     CMotor(uint8_t interrupt_numb, uint8_t pin_pwm, uint8_t pin_dir1, uint8_t pin_dir2);
+    
+    // Create new instance of PID's class
     CPid* pidMotor = new CPid;
 
+    // Motor's speed in revolution per second
     float rvPerS = 0;
     
+    // This is must be private, but Arduino can't accept calculate motor's ticks function in class and you should
+    // add increasing function for main sketch's attachInterrupt function parameter
+    // Function example: "void increaseMotor1Ticks() { motor1.tickCount++ } "
     volatile int tickCount = 0;
 
+    // Sets default settings from motor's specifications
+    // Accepts motor's reduction coefficient, period of motor processing in millis,
+    // Coefficients from PID regulator and range of PID's work
     void setup(float motor_reduc_coef, float speed_calc_millis, float pidKp, float pidKi, float pidKd, float pid_range_min, float pid_range_max);
+    
+    // Processing of motor, accepts direction and speed like revolution per seconds
     void process(uint8_t direction, float rps);  
 
 private:
-    
+    // Checks time from last processing
     volatile unsigned long int timeStamp = 0;
 
     float m_motor_reduc_coef = 0;

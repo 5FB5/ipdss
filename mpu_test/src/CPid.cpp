@@ -39,15 +39,20 @@ void CPid::pidSetMinMax(int pid_min, int pid_max) {
 }
 
 float CPid::computePid(float input, float pidSetPoint) {
+    // Get error coefficient
     float error = pidSetPoint - input;
+    // Get the difference between current and previous error coefficients
     float d_error = pidPrevError - error;
 
+    // Calculate integral part
     pidIntegral += error * dt_s;
 
+    // Calculate other parts of PID
     pidOutput += Kp * error;
     pidOutput += Ki * pidIntegral;
     pidOutput += Kd * d_error * dt_s;
   
+    // And set restrictions for output based and working range that user wrote
     if (pidOutput < pidMin) {
         pidOutput = pidMin;
     }
@@ -55,6 +60,7 @@ float CPid::computePid(float input, float pidSetPoint) {
         pidOutput = pidMax;
     }
 
+    // Set current error value as previous
     pidPrevError = error;
 
     return pidOutput;
