@@ -2,6 +2,7 @@ build
 elf2uf2
 generated
 pico-sdk
+CMakeFiles
 
 ipdss_rpico.bin
 ipdss_rpico.dis
@@ -10,4 +11,4 @@ ipdss_rpico.elf.map
 ipdss_rpico.hex
 ipdss_rpico.uf2
 CMakeCache.txt
-
+Makefile

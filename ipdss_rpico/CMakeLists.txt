@@ -9,7 +9,7 @@ set(CMAKE_CXX_STANDARD 17)
 
 pico_sdk_init()
 
-add_executable(ipdss_rpico main.c)
+add_executable(ipdss_rpico main.cpp cmotor.h cmotor.cpp cpid.h cpid.cpp pwm.h)
 
 pico_enable_stdio_usb(ipdss_rpico 1)
 pico_enable_stdio_uart(ipdss_rpico 1)
