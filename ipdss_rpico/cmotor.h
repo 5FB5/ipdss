@@ -37,6 +37,7 @@ SOFTWARE.
 #include <stdint.h>
 
 #include "pico/stdlib.h"
+#include "pisystick.h"
 #include "pwm.h"
 #include "cpid.h"
 
@@ -52,11 +53,6 @@ public:
 
     // Motor's speed in revolution per second
     float rvPerS = 0;
-    
-    // This is must be private, but Arduino can't accept calculate motor's ticks function in class and you should
-    // add increasing function for main sketch's attachInterrupt function parameter
-    // Function example: "void increaseMotor1Ticks() { motor1.tickCount++ } "
-    volatile int tickCount = 0;
 
     // Sets default settings from motor's specifications
     // Accepts motor's reduction coefficient, period of motor processing in millis,
@@ -69,6 +65,15 @@ public:
 private:
     // Checks time from last processing
     volatile unsigned long int timeStamp = 0;
+
+    // This is must be private, but Arduino can't accept calculate motor's ticks function in class and you should
+    // add increasing function for main sketch's attachInterrupt function parameter
+    // Function example: "void increaseMotor1Ticks() { motor1.tickCount++ } "
+    volatile int tickCount = 0;
+
+    void increaseMotorTicks();
+
+    //TODO: add tickCount incrementer when Pico get interrupt
 
     float m_motor_reduc_coef = 0;
     float m_update_period = 0;

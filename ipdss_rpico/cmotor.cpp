@@ -53,12 +53,14 @@ void CMotor::setup(float motor_reduc_coef, float speed_calc_millis, float pidKp,
     gpio_put(m_pin_dir2, 0);
 }
 
+void CMotor::increaseMotorTicks() {
+    this->tickCount++;
+}
+
 void CMotor::process(uint8_t direction, float rps) {    
     // Update data from encoders and set speed to motors
-
-    //FIXME: fix millis 
-    /*
-    if (millis() - timeStamp >= m_update_period) {
+    
+    if (get_systick() - timeStamp >= m_update_period) {
         rvPerS = tickCount / (m_motor_reduc_coef * m_update_period);
         tickCount = 0;
 
@@ -77,8 +79,7 @@ void CMotor::process(uint8_t direction, float rps) {
         
         pwm_set_gpio_level(m_pin_pwm, pwm);
 
-        timeStamp = millis();
+        timeStamp = get_systick();
         
     }
-    */
 }
