@@ -32,7 +32,6 @@
 
 #include "pico/stdlib.h"
 #include "cmotor.h"
-#include "cpid.h"
 
 CMotor motor1(MOTOR1_INTERRUPT, PIN_MOTOR_ENA, PIN_MOTOR_IN1, PIN_MOTOR_IN2);
 CMotor motor2(MOTOR2_INTERRUPT, PIN_MOTOR2_ENB, PIN_MOTOR2_IN3, PIN_MOTOR2_IN4);

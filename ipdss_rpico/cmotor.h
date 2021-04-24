@@ -37,6 +37,8 @@ SOFTWARE.
 #include <stdint.h>
 
 #include "pico/stdlib.h"
+#include "hardware/gpio.h"
+#include "hardware/uart.h"
 #include "pisystick.h"
 #include "pwm.h"
 #include "cpid.h"
@@ -46,11 +48,8 @@ class CMotor {
 public:
     // Constructor, accepts number of interrupt for encoder, PWM pin, 
     // digital pins that sets direction for current motor
-    CMotor(uint8_t interrupt_numb, uint8_t pin_pwm, uint8_t pin_dir1, uint8_t pin_dir2);
+    CMotor(uint8_t pin_interrupt, uint8_t pin_pwm, uint8_t pin_dir1, uint8_t pin_dir2);
     
-    // Create new instance of PID's class
-    CPid* pidMotor = new CPid;
-
     // Motor's speed in revolution per second
     float rvPerS = 0;
 
@@ -63,22 +62,23 @@ public:
     void process(uint8_t direction, float rps);  
 
 private:
+    
+    // Create new instance of PID's class
+    CPid* pidMotor = new CPid;
+
+    // Main function for increasing ticks from motor's encoder
+    void increaseTickCount();
+    // Callback function that returns increaseTickCount() pointer for translating it into gpio_callback_t type
+    static void increaseTickCount_callback(void* context);
+
     // Checks time from last processing
     volatile unsigned long int timeStamp = 0;
-
-    // This is must be private, but Arduino can't accept calculate motor's ticks function in class and you should
-    // add increasing function for main sketch's attachInterrupt function parameter
-    // Function example: "void increaseMotor1Ticks() { motor1.tickCount++ } "
     volatile int tickCount = 0;
-
-    void increaseMotorTicks();
-
-    //TODO: add tickCount incrementer when Pico get interrupt
-
+    
     float m_motor_reduc_coef = 0;
     float m_update_period = 0;
     
-    uint8_t m_interrupt_numb;
+    uint8_t m_pin_interrupt;
     uint8_t m_pin_pwm;
     uint8_t m_pin_dir1;
     uint8_t m_pin_dir2;

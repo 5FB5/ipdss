@@ -20,9 +20,9 @@ SOFTWARE.
 
 #include "cmotor.h"
 
-CMotor::CMotor(uint8_t interrupt_numb, uint8_t pin_pwm, uint8_t pin_dir1,uint8_t pin_dir2) {
+CMotor::CMotor(uint8_t pin_interrupt, uint8_t pin_pwm, uint8_t pin_dir1,uint8_t pin_dir2) {
     // Set all values to private variables
-    m_interrupt_numb = interrupt_numb;
+    m_pin_interrupt = pin_interrupt;
     m_pin_pwm = pin_pwm;
     m_pin_dir1 = pin_dir1;
     m_pin_dir2 = pin_dir2;
@@ -30,11 +30,13 @@ CMotor::CMotor(uint8_t interrupt_numb, uint8_t pin_pwm, uint8_t pin_dir1,uint8_t
     gpio_init(m_pin_pwm);
     gpio_init(m_pin_dir1);
     gpio_init(m_pin_dir2);
+
+    gpio_pull_up(m_pin_dir1);
+    gpio_pull_up(m_pin_dir2);
 }
 
 void CMotor::setup(float motor_reduc_coef, float speed_calc_millis, float pidKp, float pidKi, float pidKd, float pid_range_min, float pid_range_max) {
     // Set mode for pins
-
     gpio_set_dir(m_pin_dir1, true);
     gpio_set_dir(m_pin_dir2, true);
 
@@ -51,15 +53,13 @@ void CMotor::setup(float motor_reduc_coef, float speed_calc_millis, float pidKp,
     // Turn off motor direction
     gpio_put(m_pin_dir1, 0);
     gpio_put(m_pin_dir2, 0);
-}
 
-void CMotor::increaseMotorTicks() {
-    this->tickCount++;
+    gpio_set_irq_enabled_with_callback(this->m_pin_interrupt, GPIO_IRQ_EDGE_RISE, true, (gpio_irq_callback_t)CMotor::increaseTickCount_callback);
 }
 
 void CMotor::process(uint8_t direction, float rps) {    
     // Update data from encoders and set speed to motors
-    
+
     if (get_systick() - timeStamp >= m_update_period) {
         rvPerS = tickCount / (m_motor_reduc_coef * m_update_period);
         tickCount = 0;
@@ -82,4 +82,12 @@ void CMotor::process(uint8_t direction, float rps) {
         timeStamp = get_systick();
         
     }
+}
+
+void CMotor::increaseTickCount_callback(void* context) {
+    return reinterpret_cast<CMotor*>(context)->increaseTickCount();
+}
+
+void CMotor::increaseTickCount() {
+        this->tickCount++;
 }
