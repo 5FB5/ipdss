@@ -22,37 +22,37 @@ SOFTWARE.
 
 CMotor::CMotor(uint8_t pin_interrupt, uint8_t pin_pwm, uint8_t pin_dir1,uint8_t pin_dir2) {
     // Set all values to private variables
-    m_pin_interrupt = pin_interrupt;
-    m_pin_pwm = pin_pwm;
-    m_pin_dir1 = pin_dir1;
-    m_pin_dir2 = pin_dir2;
+    this->m_pin_interrupt = pin_interrupt;
+    this->m_pin_pwm = pin_pwm;
+    this->m_pin_dir1 = pin_dir1;
+    this->m_pin_dir2 = pin_dir2;
 
-    gpio_init(m_pin_pwm);
-    gpio_init(m_pin_dir1);
-    gpio_init(m_pin_dir2);
+    gpio_init(this->m_pin_pwm);
+    gpio_init(this->m_pin_dir1);
+    gpio_init(this->m_pin_dir2);
 
-    gpio_pull_up(m_pin_dir1);
-    gpio_pull_up(m_pin_dir2);
+    gpio_pull_up(this->m_pin_dir1);
+    gpio_pull_up(this->m_pin_dir2);
 }
 
 void CMotor::setup(float motor_reduc_coef, float speed_calc_millis, float pidKp, float pidKi, float pidKd, float pid_range_min, float pid_range_max) {
     // Set mode for pins
-    gpio_set_dir(m_pin_dir1, true);
-    gpio_set_dir(m_pin_dir2, true);
+    gpio_set_dir(this->m_pin_dir1, true);
+    gpio_set_dir(this->m_pin_dir2, true);
 
-    gpio_set_function(m_pin_pwm, GPIO_FUNC_PWM);
+    gpio_set_function(this->m_pin_pwm, GPIO_FUNC_PWM);
     
     // Set basic settings for PID and for other vars
-    pidMotor->computeMsToSeconds(speed_calc_millis);
-    pidMotor->pidSetMinMax(pid_range_min, pid_range_max);
-    pidMotor->pidSetCoefs(pidKp, pidKi, pidKd);
+    this->pidMotor->computeMsToSeconds(speed_calc_millis);
+    this->pidMotor->pidSetMinMax(pid_range_min, pid_range_max);
+    this->pidMotor->pidSetCoefs(pidKp, pidKi, pidKd);
 
-    m_motor_reduc_coef = motor_reduc_coef;
-    m_update_period = speed_calc_millis;
+    this->m_motor_reduc_coef = motor_reduc_coef;
+    this->m_update_period = speed_calc_millis;
 
     // Turn off motor direction
-    gpio_put(m_pin_dir1, 0);
-    gpio_put(m_pin_dir2, 0);
+    gpio_put(this->m_pin_dir1, 0);
+    gpio_put(this->m_pin_dir2, 0);
 
     gpio_set_irq_enabled_with_callback(this->m_pin_interrupt, GPIO_IRQ_EDGE_RISE, true, (gpio_irq_callback_t)CMotor::increaseTickCount_callback);
 }
@@ -60,26 +60,26 @@ void CMotor::setup(float motor_reduc_coef, float speed_calc_millis, float pidKp,
 void CMotor::process(uint8_t direction, float rps) {    
     // Update data from encoders and set speed to motors
 
-    if (get_systick() - timeStamp >= m_update_period) {
-        rvPerS = tickCount / (m_motor_reduc_coef * m_update_period);
-        tickCount = 0;
+    if (get_systick() - this->timeStamp >= this->m_update_period) {
+        this->rvPerS = this->tickCount / (this->m_motor_reduc_coef * this->m_update_period);
+        this->tickCount = 0;
 
-        unsigned char pwm = (unsigned char)pidMotor->computePid(rvPerS, rps) / PWM_TO_RPS;
+        unsigned char pwm = (unsigned char)this->pidMotor->computePid(this->rvPerS, rps) / PWM_TO_RPS;
     
         pwm = abs(pwm);
 
         if (direction == 0) {
-            gpio_put(m_pin_dir1, 1);
-            gpio_put(m_pin_dir2, 0);
+            gpio_put(this->m_pin_dir1, 1);
+            gpio_put(this->m_pin_dir2, 0);
         }
         else if (direction == 1) {
-            gpio_put(m_pin_dir1, 0);
-            gpio_put(m_pin_dir2, 1);
+            gpio_put(this->m_pin_dir1, 0);
+            gpio_put(this->m_pin_dir2, 1);
         }
         
-        pwm_set_gpio_level(m_pin_pwm, pwm);
+        pwm_set_gpio_level(this->m_pin_pwm, pwm);
 
-        timeStamp = get_systick();
+        this->timeStamp = get_systick();
         
     }
 }
