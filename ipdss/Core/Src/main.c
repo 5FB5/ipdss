@@ -43,6 +43,8 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+uint32_t interval = 150;
+uint32_t intTimeStamp;
 
 /* USER CODE END PV */
 
@@ -86,6 +88,8 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   /* USER CODE BEGIN 2 */
+  uint32_t previousMillis = HAL_GetTick();
+  intTimeStamp = HAL_GetTick();
 
   /* USER CODE END 2 */
 
@@ -93,10 +97,12 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  HAL_Delay(1000);
-	  HAL_GPIO_WritePin(GPIOD, LD4_Pin, GPIO_PIN_SET);
-	  HAL_Delay(1000);
-	  HAL_GPIO_WritePin(GPIOD, LD4_Pin, GPIO_PIN_RESET);
+	  if (HAL_GetTick() - previousMillis >= interval)
+	  {
+		  HAL_GPIO_TogglePin(GPIOD, LD5_Pin);
+		  HAL_GPIO_TogglePin(GPIOD, LD6_Pin);
+		  previousMillis = HAL_GetTick();
+	  }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -148,7 +154,12 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
+		if (HAL_GetTick() - intTimeStamp >= 10 && interval != 0) {
+			interval--;
+			intTimeStamp = HAL_GetTick();
+		}
+}
 /* USER CODE END 4 */
 
 /**
